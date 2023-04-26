@@ -1,4 +1,5 @@
 # Flatten XML to pandas creating a column for each element with nested element tags included in the column name
+# write to CSV
 
 from collections import defaultdict
 import xml.etree.ElementTree as ET
