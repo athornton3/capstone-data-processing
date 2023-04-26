@@ -1,0 +1,48 @@
+# this requires a virtual environment that can run BERTopic
+from bertopic import BERTopic
+from sentence_transformers import SentenceTransformer, util
+import plotly.graph_objects as go
+import plotly.io as pio
+pio.kaleido.scope.mathjax = None
+from sklearn.feature_extraction.text import CountVectorizer
+
+projects_df = pd.read_csv("export_2023_col_rv_latlong.csv",encoding='utf-8')
+project_texts = list(projects_df['AbstractNarration'].astype(str))
+
+sentence_model = SentenceTransformer("allenai-specter")
+vectorizer_model = CountVectorizer(stop_words="english")
+topic_model = BERTopic(embedding_model=sentence_model, vectorizer_model=vectorizer_model, min_topic_size=15)
+topics, probs = topic_model.fit_transform(project_texts) 
+len(topic_model.get_topic_info())
+
+#write topics to the dataframe and out to csv
+hold = topic_model.get_topic_info()
+df = pd.DataFrame({"Document": project_texts, "Topic": topics})
+projects_df['Topic'] = topics
+
+df3 = hold.merge(projects_df, on="Topic")
+df3[["Topic","Name","Index0","AbstractNarration"]]
+df3.to_csv("export_2023_col_rv_latlong_narrow_topics.csv",encoding='utf-8')
+
+#create viz
+fig = go.Figure()
+fig = topic_model.visualize_topics()
+#fig.show()
+fig.write_image("topic_intertopic distance.png")
+
+#create viz
+fig = topic_model.visualize_barchart(top_n_topics=8, height=700)
+#fig.show()
+fig.write_image("topic_barchart_top8.png")
+
+#create viz
+topic_model.visualize_hierarchy(top_n_topics=50, width=800)
+fig = topic_model.visualize_hierarchy(top_n_topics=50, width=800)
+#fig.show()
+fig.write_image("topic_heirarchical.png")
+
+#create viz
+topic_model.visualize_heatmap(n_clusters=15, top_n_topics=100)
+fig = topic_model.visualize_heatmap(n_clusters=23, top_n_topics=100)
+#fig.show()
+fig.write_image("topic_heatmap.png")
